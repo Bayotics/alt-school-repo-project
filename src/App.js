@@ -1,12 +1,29 @@
 import './App.css';
-import Repos from './components/repos';
+import Home from './pages/Home';
+import NotFoundPage from './pages/NotFoundPage';
+import Repo from './pages/Repo';
+import OutletRoute from './components/outletRoute';
+import {
+  Route,
+  Routes,
+  BrowserRouter as Router,
+} from "react-router-dom";
 
 function App() {
   return (
-    <div className="App">
-      <h1>hELLO WORLD!</h1>
-      <Repos />
-    </div>
+    <Router>
+      <div className="App">
+        <h1>hELLO WORLD!</h1>
+        <Routes>
+          <Route path='/' element = {<Home />} />
+          <Route path='*' element = {<NotFoundPage />} />
+          <Route path='/repo' element = {<OutletRoute />}>
+            <Route path=':id' element = {<Repo />} />
+          </Route>
+        </Routes>
+        
+      </div>
+    </Router>
   );
 }
 
