@@ -13,7 +13,6 @@ function App() {
   return (
     <Router>
       <div className="App">
-        <h1>hELLO WORLD!</h1>
         <Routes>
           <Route path='/' element = {<Home />} />
           <Route path='*' element = {<NotFoundPage />} />

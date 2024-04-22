@@ -1,13 +1,17 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { Octokit } from 'octokit';
+import { ToastContainer, toast } from "react-toastify";
+
 
 function Repo() {
 
   const { id } = useParams()
-  const [repodetails, setrepoDetails] = useState({})
-  const [branch, setBranch] = useState({})
-  const [deployment, setDeployment] = useState({})
-  const [userAvatar, setUserAvatar] = useState("")
+  const [repodetails, setrepoDetails] = useState({});
+  const [postmodal, setPostModal] = useState (false);
+  const [name, setName] = useState("");
+    const [description, setDescription] = useState("");
+
  
   useEffect(() => {
     const getRepos = async () => {
@@ -19,40 +23,64 @@ function Repo() {
     }
     getRepos()
   }, []) 
+  const getError = (error) => {
+    return error.response && error.response.data.message
+      ? error.response.data.message
+      : error.message;
+  };
+  const octokit = new Octokit({
+    auth: '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'
+  })
+  const navigate = useNavigate()
+  const deleterepoFunc = async () => {
+    try{
+      await octokit.request('DELETE /repos/{owner}/{repo}', {
+        owner: 'bayotics',
+        repo: repodetails.name,
+        headers: {
+          'X-GitHub-Api-Version': '2022-11-28'
+        }
+    })
+    }
+    catch(err){
+      toast.error(getError(err))
+    }
+    // use modal to confirm delete if time still dey
+    alert("Repository deleted successfully!")
+  navigate('/');
+}
 
-  useEffect(()  => {
-    const getBranches = async () => {
-    await fetch(`https://api.github.com/repos/bayotics/${id}/branches`)
-    .then((response) => (response.json()))
-    .then((data) => {
-      setBranch(data)
-      })
-    }  
-    getBranches()
-  }, []) 
+useEffect (() => {
+  const populateForm = () => {
+  setName(repodetails.name);
+  setDescription(repodetails.description);
+  }
+  populateForm()
+}, [repodetails])
+const editfunc = async (e) => {
+  e.preventDefault();
+  
 
-  useEffect(() => {
-    setUserAvatar(repodetails.owner.avatar_url)
-  }, [])
+  await octokit.request('PATCH /repos/{owner}/{repo}', {
+    owner: 'bayotics',
+    repo: repodetails.name,
+    name: name,
+    description: description,
+    headers: {
+      'X-GitHub-Api-Version': '2022-11-28'
+    }
+  })
+  alert("repo updated successfully!");
+  navigate('/')
 
-  console.log(repodetails.owner)
-// console.log(repodetails.owner.avatar_url)    
-// const userAvatar = repodetails.owner.avatar_url
-
-//   useEffect(() => {
-//     fetch(`https://api.github.com/repos/bayotics/${id}/deployments`)
-//     .then((response) => (response.json()))
-//     .then((data) => {
-//       setDeployment(data)
-//     })
-//   }, []) 
+}
 
   return (
     <div className="repo-details">
         <div className='w-4/5 pb-3 border-b repo-details-heading'>
             <div className='flex gap-2'>
                 <div className='user-avatar h-6 w-6'>
-                    <img className='user-image' src = {userAvatar} alt='user-repo-avatar' />
+                    {/* <img className='user-image' src = {userAvatar} alt='user-repo-avatar' /> */}
                 </div>
                 <div className='repo-title'>
                     <h3 className="text-lg font-semibold text-blue-600">{repodetails.name}</h3>
@@ -79,6 +107,43 @@ function Repo() {
             <div><h3>{repodetails.language}</h3></div>
           )}</div>
         </div>
+        <div className='delete-repo flex justify-center mt-6'>
+          <button className='w-40 h-10 bg-red-600' onClick={deleterepoFunc}>
+            <p className='text-white'>Delete Repository</p>
+          </button>
+        </div>
+        <ToastContainer />
+        <div className='delete-repo flex justify-center mt-6' onClick={() => setPostModal(!postmodal)}>
+          <button className='w-40 h-10 bg-green-600'>
+            <p className='text-white'>Edit Repository</p>
+          </button>
+        </div>
+        {postmodal && 
+        <div className='modal-edit-main w-3/5 mt-10 bg-gray-200 py-6 px-4 rounded-3xl'>
+          <div className="cancel-button">
+              <p onClick={() => setPostModal(false)} className="text-red-600 cancel-btn"> X </p>
+          </div>
+          <div className='edit-modal'>
+            <form className="mt-10">
+              <div className="repo-title repo-input flex gap-3">
+                  <label>Edtit Title</label>
+                  <input className='border mr-3' type="text" 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)}/>
+              </div>
+              <div className="repo-description mt-3 flex gap-3">
+                  <label>Edit description</label>
+                  <input className='border' type="text" 
+                  value={description} 
+                  onChange={(e) => setDescription(e.target.value)}/>
+              </div>
+              <button className="h-10 w-20 bg-green-400 mt-8 " type="submit" onClick={editfunc}>
+                  <p className="text-xs">Edit repository</p>
+              </button>
+            </form>
+          </div>
+        </div>}
+        
     </div>
   )
 }

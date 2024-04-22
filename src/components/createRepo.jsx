@@ -1,38 +1,67 @@
 import { useState, useEffect } from "react"
 import { Octokit } from "octokit";
+import { ToastContainer, toast } from "react-toastify";
 
-const CreateRepo = () => {
-    const [org, setOrg] = useState("");
+const CreateRepo = ({setPostModal}) => {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
-    const [homepage, setHomePage] = useState ("");
-    const [has_issues, set_has_issues] = useState (true);
-    const [has_projects, set_has_projects] = useState (true);
-    const [has_wiki, set_has_wiki] = useState (true);
 
-
-
-    // Octokit.js
-// https://github.com/octokit/core.js#readme
+    const getError = (error) => {
+        return error.response && error.response.data.message
+          ? error.response.data.message
+          : error.message;
+      };
 const octokit = new Octokit({
-    auth: 'YOUR-TOKEN'
+    // auth: process.env.PERSONAL_ACCESS_TOKEN
+    auth: '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'
   })
   
-  await octokit.request('POST /orgs/{org}/repos', {
-    org: 'ORG',
-    name: 'Hello-World',
-    description: 'This is your first repository',
-    homepage: 'https://github.com',
-    'private': false,
-    has_issues: true,
-    has_projects: true,
-    has_wiki: true,
-    headers: {
-      'X-GitHub-Api-Version': '2022-11-28'
+
+  const createRepoFunc = async (e) => {
+    e.preventDefault()
+    try{
+        await octokit.request('POST /user/repos', {
+            name: name,
+            description: description,
+            headers: {
+              'X-GitHub-Api-Version': '2022-11-28'
+            }
+          })
+          toast.success("Empty Repo created Successfully"); //you fit just use alert to save time of styling the toast
     }
-  })
+    catch (err){
+        toast.error(getError(err))
+    }
+    
+  }
     return (
-        <div>This is the create repo modal</div>
+        <div className="modal-main w-3/5 bg-gray-200 py-6 px-4 rounded-3xl">
+            <div className="cancel-button">
+                <p onClick={() => setPostModal(false)} className="text-red-600 cancel-btn"> X </p>
+            </div>
+            <form className="mt-10">
+                <div className="repo-title repo-input">
+                    <label>Title</label>
+                    <input type="text" 
+                    placeholder="input repo title" 
+                    value={name} 
+                    onChange={(e) => setName(e.target.value)}/>
+                </div>
+                <div className="repo-description mt-3">
+                    <label>A brief description of your repoitory</label>
+                    <input type="text" 
+                    placeholder="input repo description" 
+                    value={description} 
+                    onChange={(e) => setDescription(e.target.value)}/>
+                </div>
+                <button className="h-10 w-20 bg-green-400 mt-8" type="submit" onClick={createRepoFunc}>
+                    <p className="text-xs">Create repository</p>
+                </button>
+            </form>
+            <div className="h-10 w-10">
+                <ToastContainer />
+            </div>
+        </div>
     )
 }
 
